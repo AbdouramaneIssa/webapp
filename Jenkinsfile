@@ -1,11 +1,12 @@
 pipeline {
     agent any
     
-    // Configuration des paramètres Slack
-    // Le nom de la configuration Slack est "Jenkins-Notifier" comme spécifié par l'utilisateur.
-    // Le canal est "#jenkins-builds".
-    def slackChannel = '#jenkins-builds'
-    def slackConfig = 'Jenkins-Notifier'
+    // CORRECTION : Les variables d'environnement doivent être déclarées ici
+    environment {
+        SLACK_CHANNEL = '#jenkins-builds'
+        SLACK_CONFIG = 'Jenkins-Notifier' // Le nom de l'API/Credential ID
+        SLACK_DOMAIN = 'travailraman' // Le nom du domaine/workspace Slack
+    }
     
     // Définition des options globales pour le pipeline
     options {
@@ -15,26 +16,17 @@ pipeline {
         timestamps()
     }
 
-    // Déclencheur : Le pipeline sera déclenché par un push sur la branche 'dev'
-    // Note: Le déclenchement réel est géré par le webhook GitHub configuré dans Jenkins.
-    // Ce bloc est plus pour la documentation et les bonnes pratiques.
-    // Pour un pipeline de type "Multibranch Pipeline" ou "Organization Folder", Jenkins gère cela automatiquement.
-    // Pour un pipeline de type "Pipeline" simple, le webhook doit être configuré pour pointer vers l'URL de Jenkins et le job.
-    // Le bloc 'triggers' n'est pas strictement nécessaire pour le SCM polling ou les webhooks.
-    
     stages {
         stage('Démarrage du Pipeline') {
             steps {
-                script {
-                    // Notification de début de build
-                    slackSend(
-                        channel: slackChannel,
-                        color: 'good',
-                        message: "✅ *Démarrage du Pipeline* : Le build #${env.BUILD_NUMBER} pour le dépôt `${env.JOB_NAME}` sur la branche `${env.BRANCH_NAME}` a commencé. (<${env.BUILD_URL}|Voir le Build>)",
-                        teamDomain: 'travailraman',
-                        tokenCredentialId: slackConfig
-                    )
-                }
+                // Notification de début de build (plus besoin du bloc 'script' pour la notification ici)
+                slackSend(
+                    channel: env.SLACK_CHANNEL,
+                    color: '#ffc107', // Jaune/Orange pour le démarrage
+                    message: "✅ *Démarrage du Pipeline* : Le build #${env.BUILD_NUMBER} pour le dépôt `${env.JOB_NAME}` sur la branche `${env.BRANCH_NAME}` a commencé. (<${env.BUILD_URL}|Voir le Build>)",
+                    teamDomain: env.SLACK_DOMAIN,
+                    tokenCredentialId: env.SLACK_CONFIG
+                )
             }
         }
         
@@ -42,71 +34,56 @@ pipeline {
             steps {
                 // Récupération du code depuis GitHub
                 checkout scm
-                script {
-                    // Notification de succès de l'étape
-                    slackSend(
-                        channel: slackChannel,
-                        color: 'good',
-                        message: "ℹ️ *Étape 1/4: Checkout du Code* : Code récupéré avec succès sur la branche `${env.BRANCH_NAME}`. (<${env.BUILD_URL}|Détails>)",
-                        teamDomain: 'travailraman',
-                        tokenCredentialId: slackConfig
-                    )
-                }
+                // Notification de succès de l'étape
+                slackSend(
+                    channel: env.SLACK_CHANNEL,
+                    color: 'good',
+                    message: "ℹ️ *Étape 1/4: Checkout du Code* : Code récupéré avec succès sur la branche `${env.BRANCH_NAME}`. (<${env.BUILD_URL}|Détails>)",
+                    teamDomain: env.SLACK_DOMAIN,
+                    tokenCredentialId: env.SLACK_CONFIG
+                )
             }
         }
 
         stage('Build') {
             steps {
                 echo 'Simuler l\'étape de construction (par exemple, npm install, mvn package, docker build)'
-                // Remplacer ceci par vos commandes de build réelles
-                // sh 'npm install'
-                // sh 'npm run build'
-                script {
-                    // Notification de succès de l'étape
-                    slackSend(
-                        channel: slackChannel,
-                        color: 'good',
-                        message: "🛠️ *Étape 2/4: Build* : La construction du projet est terminée. (<${env.BUILD_URL}|Détails>)",
-                        teamDomain: 'travailraman',
-                        tokenCredentialId: slackConfig
-                    )
-                }
+                // sh 'npm install' // Décommenter pour une vraie commande
+                slackSend(
+                    channel: env.SLACK_CHANNEL,
+                    color: 'good',
+                    message: "🛠️ *Étape 2/4: Build* : La construction du projet est terminée. (<${env.BUILD_URL}|Détails>)",
+                    teamDomain: env.SLACK_DOMAIN,
+                    tokenCredentialId: env.SLACK_CONFIG
+                )
             }
         }
 
         stage('Test') {
             steps {
                 echo 'Simuler l\'étape de test (par exemple, npm test, mvn test)'
-                // Remplacer ceci par vos commandes de test réelles
-                // sh 'npm test'
-                script {
-                    // Notification de succès de l'étape
-                    slackSend(
-                        channel: slackChannel,
-                        color: 'good',
-                        message: "🧪 *Étape 3/4: Test* : Les tests unitaires et d'intégration ont réussi. (<${env.BUILD_URL}|Détails>)",
-                        teamDomain: 'travailraman',
-                        tokenCredentialId: slackConfig
-                    )
-                }
+                // sh 'npm test' // Décommenter pour une vraie commande
+                slackSend(
+                    channel: env.SLACK_CHANNEL,
+                    color: 'good',
+                    message: "🧪 *Étape 3/4: Test* : Les tests unitaires et d'intégration ont réussi. (<${env.BUILD_URL}|Détails>)",
+                    teamDomain: env.SLACK_DOMAIN,
+                    tokenCredentialId: env.SLACK_CONFIG
+                )
             }
         }
 
         stage('Déploiement') {
             steps {
                 echo 'Simuler l\'étape de déploiement sur l\'environnement DEV'
-                // Remplacer ceci par vos commandes de déploiement réelles
-                // sh 'ssh user@dev-server "deploy-script.sh"'
-                script {
-                    // Notification de succès de l'étape
-                    slackSend(
-                        channel: slackChannel,
-                        color: 'good',
-                        message: "🚀 *Étape 4/4: Déploiement* : Le déploiement sur l'environnement DEV est terminé. (<${env.BUILD_URL}|Détails>)",
-                        teamDomain: 'travailraman',
-                        tokenCredentialId: slackConfig
-                    )
-                }
+                // sh 'ssh user@dev-server "deploy-script.sh"' // Décommenter pour une vraie commande
+                slackSend(
+                    channel: env.SLACK_CHANNEL,
+                    color: 'good',
+                    message: "🚀 *Étape 4/4: Déploiement* : Le déploiement sur l'environnement DEV est terminé. (<${env.BUILD_URL}|Détails>)",
+                    teamDomain: env.SLACK_DOMAIN,
+                    tokenCredentialId: env.SLACK_CONFIG
+                )
             }
         }
     }
@@ -118,28 +95,24 @@ pipeline {
             cleanWs()
         }
         success {
-            script {
-                // Notification de succès final
-                slackSend(
-                    channel: slackChannel,
-                    color: 'good',
-                    message: "🎉 *Pipeline SUCCÈS* : Le build #${env.BUILD_NUMBER} pour `${env.JOB_NAME}` est terminé avec succès. Déploiement sur DEV réussi. (<${env.BUILD_URL}|Voir le Build>)",
-                    teamDomain: 'travailraman',
-                    tokenCredentialId: slackConfig
-                )
-            }
+            // Notification de succès final
+            slackSend(
+                channel: env.SLACK_CHANNEL,
+                color: 'good',
+                message: "🎉 *Pipeline SUCCÈS* : Le build #${env.BUILD_NUMBER} pour `${env.JOB_NAME}` est terminé avec succès. Déploiement sur DEV réussi. (<${env.BUILD_URL}|Voir le Build>)",
+                teamDomain: env.SLACK_DOMAIN,
+                tokenCredentialId: env.SLACK_CONFIG
+            )
         }
         failure {
-            script {
-                // Notification d'échec
-                slackSend(
-                    channel: slackChannel,
-                    color: 'danger',
-                    message: "❌ *Pipeline ÉCHEC* : Le build #${env.BUILD_NUMBER} pour `${env.JOB_NAME}` a échoué. Vérifiez les logs. (<${env.BUILD_URL}|Voir le Build>)",
-                    teamDomain: 'travailraman',
-                    tokenCredentialId: slackConfig
-                )
-            }
+            // Notification d'échec
+            slackSend(
+                channel: env.SLACK_CHANNEL,
+                color: 'danger',
+                message: "❌ *Pipeline ÉCHEC* : Le build #${env.BUILD_NUMBER} pour `${env.JOB_NAME}` a échoué. Vérifiez les logs. (<${env.BUILD_URL}|Voir le Build>)",
+                teamDomain: env.SLACK_DOMAIN,
+                tokenCredentialId: env.SLACK_CONFIG
+            )
         }
     }
 }
